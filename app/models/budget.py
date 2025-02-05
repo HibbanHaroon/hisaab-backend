@@ -9,8 +9,5 @@ class Budget(Base):
     amount_spent = Column(Double, nullable=False, default=0.0)
     total_amount = Column(Double, nullable=False)
 
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
-
     # Because the name of the cateogry would also be the name of the budget, as it is a budget for that cateogry
     category = relationship("Category", back_populates="budgets")
