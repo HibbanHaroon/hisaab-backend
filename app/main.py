@@ -21,8 +21,13 @@ async def lifespan(app: FastAPI):
     init_db()
     yield
 
+# TODO: Create a function which returns FastAPI
+
 app = FastAPI(title=settings.PROJECT_NAME, version=settings.VERSION, lifespan=lifespan)
 
+
+# TODO: Add these routers in a file routers/router.py
+# TODO: Move the routers files to an endpoints folder
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(categories.router)
