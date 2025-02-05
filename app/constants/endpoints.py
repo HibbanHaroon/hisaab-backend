@@ -1,5 +1,11 @@
-__USER = "/user"
+# General
+BASE_URL = "/api"
+AUTH = "/auth"
+USER = "/user"
+CATEGORY = "/category"
+EXPENSE = "/expense"
+BUDGET = "/budget"
 
 # Auth
-REGISTER = __USER + "/register"
-LOGIN = __USER + "/login"
+REGISTER = "/register"
+LOGIN = "/login"

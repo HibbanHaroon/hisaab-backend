@@ -5,14 +5,12 @@ from ..utils.auth_utils import get_password_hash
 from ..models import User
 from ..schemas.user import UserRegister, UserResponse
 from ..exceptions import CustomHTTPException
-
-# Errors
-PASSWORD_MISMATCH = "Passwords do not match!"
-EMAIL_EXISTS = "Email already exists."
+from ..constants.error_messages import PASSWORD_MISMATCH, EMAIL_EXISTS
+from ..constants.endpoints import REGISTER, LOGIN
 
 router = APIRouter()
 
-@router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+@router.post(REGISTER, response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def register(user: UserRegister, db: Session = Depends(get_db)) -> UserResponse:
     # Validate passwords match
     if user.password != user.confirm_password:
