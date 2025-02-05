@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from contextlib import asynccontextmanager
 from sqlalchemy_utils import database_exists, create_database
 import uvicorn
 
@@ -7,8 +8,6 @@ from .routers import auth, users, categories, budget, expense
 from .exceptions import CustomHTTPException, http_exception_handler
 from .settings import settings
 
-app = FastAPI(title=settings.PROJECT_NAME, version=settings.VERSION)
-
 def init_db() -> None:
     """Initialize database and create tables if they don't exist."""
     if not database_exists(engine.url):
@@ -16,10 +15,13 @@ def init_db() -> None:
     Base.metadata.create_all(bind=engine)
 
 # Register startup event
-@app.lifespan("startup")
-async def startup_event() -> None:
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     """Initialize application on startup."""
     init_db()
+    yield
+
+app = FastAPI(title=settings.PROJECT_NAME, version=settings.VERSION, lifespan=lifespan)
 
 app.include_router(auth.router)
 app.include_router(users.router)
@@ -34,4 +36,4 @@ async def root():
     return {"info": "Welcome to Hisaab Backend"}
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True, workers=1)
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True, workers=1)
