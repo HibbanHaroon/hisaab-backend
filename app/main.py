@@ -3,8 +3,8 @@ from contextlib import asynccontextmanager
 from sqlalchemy_utils import database_exists, create_database
 import uvicorn
 
-from .db.base import Base, engine
-from .routers import auth, users, categories, budget, expense
+from .db import Base, engine
+from .routers import auth, budgets, expenses, users, categories
 from .exceptions import CustomHTTPException, http_exception_handler
 from .settings import settings
 
@@ -31,8 +31,8 @@ app = FastAPI(title=settings.PROJECT_NAME, version=settings.VERSION, lifespan=li
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(categories.router)
-app.include_router(budget.router)
-app.include_router(expense.router)
+app.include_router(budgets.router)
+app.include_router(expenses.router)
 
 app.add_exception_handler(CustomHTTPException, http_exception_handler)
 
