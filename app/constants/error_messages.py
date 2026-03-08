@@ -1,3 +1,9 @@
 # Auth
 PASSWORD_MISMATCH = "Passwords do not match!"
 EMAIL_EXISTS = "Email already exists."
+INVALID_CREDENTIALS = "Email or password incorrect."
+UNVERIFIED_ACCOUNT = "Please verify your account first."
+INVALID_OTP = "Invalid or expired OTP."
+USER_NOT_FOUND = "User not found."
+INVALID_REFRESH_TOKEN = "Invalid or expired refresh token."
+ALREADY_VERIFIED = "Account is already verified."
