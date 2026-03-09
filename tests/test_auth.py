@@ -1,6 +1,7 @@
+from unittest.mock import patch
 from fastapi.testclient import TestClient
-from app.constants.endpoints import BASE_URL, AUTH, REGISTER, LOGIN, VERIFY_ACCOUNT, FORGOT_PASSWORD, RESET_PASSWORD, REFRESH, RESEND_OTP
-from app.constants.error_messages import UNVERIFIED_ACCOUNT, INVALID_CREDENTIALS, INVALID_OTP, INVALID_REFRESH_TOKEN, ALREADY_VERIFIED
+from app.constants.endpoints import BASE_URL, AUTH, REGISTER, LOGIN, VERIFY_ACCOUNT, FORGOT_PASSWORD, RESET_PASSWORD, REFRESH, RESEND_OTP, GUEST_AUTH, GOOGLE_AUTH
+from app.constants.error_messages import UNVERIFIED_ACCOUNT, INVALID_CREDENTIALS, INVALID_OTP, INVALID_REFRESH_TOKEN, ALREADY_VERIFIED, INVALID_GOOGLE_TOKEN, PROVIDER_MISMATCH
 from app.constants.otp_types import OTPType
 
 AUTH_BASE = f"{BASE_URL}{AUTH}"
@@ -244,3 +245,97 @@ def test_resend_otp_already_verified(client: TestClient, db_session):
     )
     assert resend_response.status_code == 400
     assert resend_response.json()["detail"] == ALREADY_VERIFIED
+
+# --- Guest Auth Tests ---
+
+def test_guest_register(client: TestClient):
+    response = client.post(f"{AUTH_BASE}{GUEST_AUTH}")
+    assert response.status_code == 201
+    data = response.json()
+    assert "access_token" in data
+    assert "refresh_token" in data
+    assert data["auth_provider"] == "guest"
+    assert data["email"].startswith("guest_")
+    assert data["email"].endswith("@hisaab")
+
+def test_guest_register_creates_unique_users(client: TestClient):
+    response1 = client.post(f"{AUTH_BASE}{GUEST_AUTH}")
+    response2 = client.post(f"{AUTH_BASE}{GUEST_AUTH}")
+    assert response1.status_code == 201
+    assert response2.status_code == 201
+    assert response1.json()["id"] != response2.json()["id"]
+    assert response1.json()["email"] != response2.json()["email"]
+
+def test_guest_login_via_refresh(client: TestClient):
+    register_response = client.post(f"{AUTH_BASE}{GUEST_AUTH}")
+    assert register_response.status_code == 201
+    refresh_token = register_response.json()["refresh_token"]
+
+    refresh_response = client.post(
+        f"{AUTH_BASE}{REFRESH}",
+        headers={"Authorization": f"Bearer {refresh_token}"}
+    )
+    assert refresh_response.status_code == 200
+    assert "access_token" in refresh_response.json()
+    assert "refresh_token" in refresh_response.json()
+
+# --- Google Auth Tests ---
+
+MOCK_GOOGLE_PAYLOAD = {
+    "sub": "google_user_123",
+    "email": "googleuser@gmail.com",
+    "given_name": "Google",
+    "family_name": "User",
+    "email_verified": True,
+}
+
+def test_google_auth_new_user(client: TestClient):
+    with patch("app.routers.auth.google_id_token.verify_oauth2_token", return_value=MOCK_GOOGLE_PAYLOAD):
+        response = client.post(
+            f"{AUTH_BASE}{GOOGLE_AUTH}",
+            json={"id_token": "valid_google_token"}
+        )
+    assert response.status_code == 200
+    data = response.json()
+    assert "access_token" in data
+    assert "refresh_token" in data
+
+def test_google_auth_existing_user(client: TestClient):
+    with patch("app.routers.auth.google_id_token.verify_oauth2_token", return_value=MOCK_GOOGLE_PAYLOAD):
+        # First call creates the user
+        client.post(f"{AUTH_BASE}{GOOGLE_AUTH}", json={"id_token": "valid_google_token"})
+        # Second call logs in the existing user
+        response = client.post(f"{AUTH_BASE}{GOOGLE_AUTH}", json={"id_token": "valid_google_token"})
+    assert response.status_code == 200
+    assert "access_token" in response.json()
+
+def test_google_auth_provider_mismatch(client: TestClient, db_session):
+    # Create a password-based user first
+    client.post(
+        f"{AUTH_BASE}{REGISTER}",
+        json={
+            "first_name": "Password",
+            "last_name": "User",
+            "email": "mismatch@gmail.com",
+            "password": "strongpassword123",
+            "confirm_password": "strongpassword123"
+        }
+    )
+
+    mismatch_payload = {**MOCK_GOOGLE_PAYLOAD, "email": "mismatch@gmail.com"}
+    with patch("app.routers.auth.google_id_token.verify_oauth2_token", return_value=mismatch_payload):
+        response = client.post(
+            f"{AUTH_BASE}{GOOGLE_AUTH}",
+            json={"id_token": "valid_google_token"}
+        )
+    assert response.status_code == 400
+    assert response.json()["detail"] == PROVIDER_MISMATCH
+
+def test_google_auth_invalid_token(client: TestClient):
+    with patch("app.routers.auth.google_id_token.verify_oauth2_token", side_effect=ValueError("Invalid token")):
+        response = client.post(
+            f"{AUTH_BASE}{GOOGLE_AUTH}",
+            json={"id_token": "invalid_token"}
+        )
+    assert response.status_code == 401
+    assert response.json()["detail"] == INVALID_GOOGLE_TOKEN

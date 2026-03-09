@@ -1,7 +1,11 @@
+import uuid
+
 from fastapi import APIRouter, Depends, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta, timezone
+from google.oauth2 import id_token as google_id_token
+from google.auth.transport import requests as google_requests
 
 from ..utils.db_utils import get_db
 from ..utils.auth_utils import get_password_hash, verify_password
@@ -11,19 +15,22 @@ from ..models import User, VerificationCode
 from ..schemas.user import (
     UserRegister, UserResponse, LoginRequest, VerifyAccountRequest,
     ForgotPasswordRequest, ResetPasswordRequest,
-    ResendOTPRequest, TokenResponse, MessageResponse
+    ResendOTPRequest, TokenResponse, MessageResponse,
+    GoogleAuthRequest, GuestUserResponse
 )
 from ..exceptions import CustomHTTPException
 from ..constants.error_messages import (
     PASSWORD_MISMATCH, EMAIL_EXISTS, INVALID_CREDENTIALS,
     INVALID_OTP, USER_NOT_FOUND, UNVERIFIED_ACCOUNT,
-    INVALID_REFRESH_TOKEN, ALREADY_VERIFIED
+    INVALID_REFRESH_TOKEN, ALREADY_VERIFIED,
+    INVALID_GOOGLE_TOKEN, PROVIDER_MISMATCH
 )
 from ..constants.endpoints import (
     REGISTER, LOGIN, VERIFY_ACCOUNT, FORGOT_PASSWORD,
-    RESET_PASSWORD, REFRESH, RESEND_OTP
+    RESET_PASSWORD, REFRESH, RESEND_OTP,
+    GUEST_AUTH, GOOGLE_AUTH
 )
-from ..constants.otp_types import OTPType
+from ..constants.otp_types import OTPType, AuthProvider
 from ..settings import settings
 
 security = HTTPBearer()
@@ -70,7 +77,7 @@ async def register(user: UserRegister, db: Session = Depends(get_db)) -> UserRes
             email=user.email,
             password=get_password_hash(user.password),
             is_verified=False,
-            auth_provider="password"
+            auth_provider=AuthProvider.PASSWORD
         )
         db.add(db_user)
         db.commit()
@@ -186,3 +193,72 @@ async def resend_otp(request: ResendOTPRequest, db: Session = Depends(get_db)) -
     await send_otp_email(user.email, otp, request.type)
 
     return MessageResponse(message="If the email exists, a new OTP has been sent.")
+
+@router.post(GUEST_AUTH, response_model=GuestUserResponse, status_code=status.HTTP_201_CREATED)
+async def guest_register(db: Session = Depends(get_db)) -> GuestUserResponse:
+    try:
+        guest_email = f"guest_{uuid.uuid4().hex}@hisaab"
+        db_user = User(
+            email=guest_email,
+            is_verified=True,
+            auth_provider=AuthProvider.GUEST
+        )
+        db.add(db_user)
+        db.commit()
+        db.refresh(db_user)
+
+        tokens = _generate_tokens(db_user)
+        return GuestUserResponse(
+            id=db_user.id,
+            email=db_user.email,
+            auth_provider=db_user.auth_provider,
+            access_token=tokens["access_token"],
+            refresh_token=tokens["refresh_token"],
+            created_at=db_user.created_at
+        )
+    except Exception as e:
+        db.rollback()
+        raise CustomHTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error creating guest user"
+        ) from e
+
+@router.post(GOOGLE_AUTH, response_model=TokenResponse)
+async def google_auth(request: GoogleAuthRequest, db: Session = Depends(get_db)) -> TokenResponse:
+    try:
+        idinfo = google_id_token.verify_oauth2_token(
+            request.id_token, google_requests.Request(), settings.GOOGLE_CLIENT_ID
+        )
+    except ValueError:
+        raise CustomHTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=INVALID_GOOGLE_TOKEN)
+
+    email = idinfo.get("email")
+    print(idinfo)
+    if not email:
+        raise CustomHTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=INVALID_GOOGLE_TOKEN)
+
+    user = db.query(User).filter(User.email == email).first()
+
+    if user:
+        if user.auth_provider != AuthProvider.GOOGLE:
+            raise CustomHTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=PROVIDER_MISMATCH)
+        return _generate_tokens(user)
+
+    try:
+        db_user = User(
+            first_name=idinfo.get("given_name"),
+            last_name=idinfo.get("family_name"),
+            email=email,
+            is_verified=True,
+            auth_provider=AuthProvider.GOOGLE,
+            provider_id=idinfo.get("sub")
+        )
+        db.add(db_user)
+        db.commit()
+        db.refresh(db_user)
+
+        return _generate_tokens(db_user)
+    except Exception as e:
+        db.rollback()
+        raise CustomHTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error creating user"
+        ) from e

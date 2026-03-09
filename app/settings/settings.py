@@ -14,6 +14,9 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7 # 7 days
     OTP_EXPIRE_MINUTES: int = 15
+
+    # Google OAuth
+    GOOGLE_CLIENT_ID: str = ""
     
     # Mail Settings
     MAIL_USERNAME: str

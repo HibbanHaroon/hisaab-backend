@@ -50,3 +50,17 @@ class TokenResponse(BaseModel):
 
 class MessageResponse(BaseModel):
     message: str
+
+class GoogleAuthRequest(BaseModel):
+    id_token: str
+
+class GuestUserResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    email: str
+    auth_provider: str
+    access_token: str
+    refresh_token: str
+    token_type: str = "bearer"
+    created_at: datetime
