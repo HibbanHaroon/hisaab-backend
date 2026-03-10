@@ -1,10 +1,10 @@
 # General
 BASE_URL = "/api"
 AUTH = "/auth"
-USER = "/user"
-CATEGORY = "/category"
-EXPENSE = "/expense"
-BUDGET = "/budget"
+USER = "/users"
+CATEGORY = "/categories"
+EXPENSE = "/expenses"
+BUDGET = "/budgets"
 
 # Auth
 REGISTER = "/register"
@@ -16,3 +16,6 @@ REFRESH = "/refresh"
 RESEND_OTP = "/resend-otp"
 GUEST_AUTH = "/guest"
 GOOGLE_AUTH = "/google"
+
+# User
+PROFILE = "/profile"

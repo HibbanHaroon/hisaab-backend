@@ -6,6 +6,12 @@ class UserBase(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     email: EmailStr
+    country: Optional[str] = None
+
+class UserUpdate(BaseModel):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    country: Optional[str] = None
 
 class UserResponse(UserBase):
     model_config = ConfigDict(from_attributes=True)

@@ -8,6 +8,7 @@ class User(Base):
     last_name = Column(String, index=True)
     email = Column(String, unique=True, index=True, nullable=False)
     password = Column(String, nullable=True) # nullable for social/anonymous
+    country = Column(String, nullable=True)
     
     is_verified = Column(Boolean, default=False)
     auth_provider = Column(String, default="password") # "password", "google", "anonymous"
