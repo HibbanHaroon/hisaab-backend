@@ -65,29 +65,39 @@ hisaab-backend/
 - `last_name`
 - `email`
 - `password`
-  **NOTE:** A `country` field can be added which can help with setting the currency from a UI perspective.
+- `country`
+- `is_verified`
+- `auth_provider`
+- `provider_id`
 
 ### Expense
 
+- `id`
+- `user_id` (foreign key)
+- `category_id` (foreign key)
 - `name`
 - `description`
 - `amount`
-  **NOTE:** Date tracking is crucial since the expenses or budget need to be displayed per month, and users must be able to view expenses for previous months/years. I'll use an explicit `expense_date` field to allow manual entry and querying, instead of relying purely on a `created_at` timestamp.
+- `expense_date`
 
 ### Budget
 
+- `id`
+- `user_id` (foreign key)
 - `category_id` (foreign key)
-- `amount_spent`
 - `total_amount`
+- `amount_spent`
+- `amount_left`
   **NOTE:** Budget is linked to a category.
-  **TODO:** `amount_spent` needs to be removed and calculated manually in our business logic.
 
 ### Category
 
+- `id`
+- `user_id` (foreign key)
 - `name`
 - `description`
 - `color`
-  _(Used to categorize expenses and link against budgets)_
+- `icon`
 
 ## API Endpoints List
 
@@ -102,35 +112,35 @@ Below is the complete list of REST API endpoints that will be necessary to cover
 - `POST /api/auth/reset-password` - Reset password
 - `POST /api/auth/refresh` - Refresh the access token (JWT)
 - `POST /api/auth/resend-otp` - Resend OTP for email verification or password reset
+- `POST /api/auth/google` - Login with Google
+- `POST /api/auth/guest` - Login as a guest (No body required)
 
-### User (`/api/user`)
+### User (`/api/users`)
 
-- `GET /api/user/me` - Get the current logged-in user profile
-- `POST /api/user/me` - Create a new user profile
-- `PATCH /api/user/me` - Update the user profile (e.g., add `country`, update name)
-- `DELETE /api/user/me` - Delete user account and associated data
+- `GET /api/users/profile` - Get the current logged-in user profile
+- `PATCH /api/users/profile` - Update the user profile (e.g., update `country`, update name)
+- `DELETE /api/users/profile` - Delete user account and associated data
 
-### Category (`/api/category`)
+### Category (`/api/categories`)
 
-- `GET /api/category` - List all available categories
-- `GET /api/category/{id}` - Get a specific category's details
-- `POST /api/category` - Create a new category
-- `PATCH /api/category/{id}` - Update a category (name, color, description)
-- `DELETE /api/category/{id}` - Delete a category
+- `GET /api/categories` - List all available categories
+- `GET /api/categories/{id}` - Get a specific category's details
+- `POST /api/categories` - Create a new category
+- `PUT /api/categories/{id}` - Update a category (name, color, icon, description)
+- `DELETE /api/categories/{id}` - Delete a category
 
-### Expense (`/api/expense`)
+### Expense (`/api/expenses`)
 
-- `GET /api/expense` - List expenses (Query params: `month`, `year`, `category_id` for filtering)
-- `GET /api/expense/{id}` - Get details of a single expense
-- `POST /api/expense` - Add a new expense
-- `PATCH /api/expense/{id}` - Update an existing expense
-- `DELETE /api/expense/{id}` - Delete an expense
+- `GET /api/expenses` - List expenses (Query params: `month`, `year`)
+- `GET /api/expenses/{id}` - Get details of a single expense
+- `POST /api/expenses` - Add a new expense
+- `PUT /api/expenses/{id}` - Update an existing expense
+- `DELETE /api/expenses/{id}` - Delete an expense
 
-### Budget (`/api/budget`)
+### Budget (`/api/budgets`)
 
-- `GET /api/budget` - List all budgets for the user (Query params: `month`, `year`)
-- `GET /api/budget/summary` - Get aggregate budget summary (Calculated dynamically: total budget vs. total spent from Expenses)
-- `GET /api/budget/{id}` - Get budget details by ID
-- `POST /api/budget` - Set a new budget for a category
-- `PATCH /api/budget/{id}` - Update the budget amount
-- `DELETE /api/budget/{id}` - Delete a budget
+- `GET /api/budgets` - List all budgets for the user (Query params: `month`, `year`)
+- `GET /api/budgets/{id}` - Get budget details by ID
+- `POST /api/budgets` - Set a new budget for a category
+- `PUT /api/budgets/{id}` - Update the budget amount
+- `DELETE /api/budgets/{id}` - Delete a budget
