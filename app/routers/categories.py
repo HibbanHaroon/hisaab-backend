@@ -31,7 +31,8 @@ async def create_category(
         user_id=current_user.id,
         name=category_in.name,
         description=category_in.description,
-        color=category_in.color
+        color=category_in.color,
+        icon=category_in.icon
     )
     db.add(category)
     db.commit()
@@ -79,7 +80,7 @@ async def update_category(
         if existing:
             raise CustomHTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Category with this name already exists"
+                detail=CATEGORY_ALREADY_EXISTS
             )
 
     update_data = category_update.model_dump(exclude_unset=True)

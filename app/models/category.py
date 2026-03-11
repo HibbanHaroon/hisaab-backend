@@ -9,6 +9,7 @@ class Category(Base):
     name = Column(String(100), index=True, nullable=False)
     description = Column(String(500))
     color = Column(String(7))
+    icon = Column(String(50)) #name of the icon in string format
 
     __table_args__ = (UniqueConstraint('user_id', 'name', name='uix_user_category_name'),)
 

@@ -49,7 +49,8 @@ async def create_budget(
     
     # Calculate amount spent for this new budget (should be 0 or based on existing expenses in category)
     amount_spent = get_budget_amount_spent(db, budget.category_id, current_user.id)
-    return {**budget.__dict__, "amount_spent": amount_spent}
+    amount_left = budget.total_amount - amount_spent
+    return {**budget.__dict__, "amount_spent": amount_spent, "amount_left": amount_left}
 
 @router.get("", response_model=List[BudgetResponse])
 async def get_budgets(
@@ -61,7 +62,8 @@ async def get_budgets(
     result = []
     for budget in budgets:
         amount_spent = get_budget_amount_spent(db, budget.category_id, current_user.id)
-        result.append({**budget.__dict__, "amount_spent": amount_spent})
+        amount_left = budget.total_amount - amount_spent
+        result.append({**budget.__dict__, "amount_spent": amount_spent, "amount_left": amount_left})
         
     return result
 
@@ -79,7 +81,8 @@ async def get_budget(
         )
         
     amount_spent = get_budget_amount_spent(db, budget.category_id, current_user.id)
-    return {**budget.__dict__, "amount_spent": amount_spent}
+    amount_left = budget.total_amount - amount_spent
+    return {**budget.__dict__, "amount_spent": amount_spent, "amount_left": amount_left}
 
 @router.put("/{budget_id}", response_model=BudgetResponse)
 async def update_budget(
@@ -103,7 +106,8 @@ async def update_budget(
     db.refresh(budget)
     
     amount_spent = get_budget_amount_spent(db, budget.category_id, current_user.id)
-    return {**budget.__dict__, "amount_spent": amount_spent}
+    amount_left = budget.total_amount - amount_spent
+    return {**budget.__dict__, "amount_spent": amount_spent, "amount_left": amount_left}
 
 @router.delete("/{budget_id}", response_model=MessageResponse)
 async def delete_budget(

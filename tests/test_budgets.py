@@ -39,6 +39,7 @@ def test_create_budget(client: TestClient, auth_headers, category):
     data = response.json()
     assert data["total_amount"] == 500.0
     assert data["amount_spent"] == 0.0
+    assert data["amount_left"] == 500.0
 
 def test_create_budget_duplicate(client: TestClient, auth_headers, budget):
     response = client.post(
@@ -54,6 +55,8 @@ def test_get_budgets(client: TestClient, auth_headers, budget):
     data = response.json()
     assert len(data) >= 1
     assert data[0]["total_amount"] == 1000.0
+    assert data[0]["amount_spent"] == 0.0
+    assert data[0]["amount_left"] == 1000.0
 
 def test_update_budget(client: TestClient, auth_headers, budget):
     response = client.put(
@@ -63,6 +66,7 @@ def test_update_budget(client: TestClient, auth_headers, budget):
     )
     assert response.status_code == 200
     assert response.json()["total_amount"] == 1200.0
+    assert response.json()["amount_left"] == 1200.0
 
 def test_delete_budget(client: TestClient, auth_headers, budget):
     response = client.delete(f"{BUDGET_BASE}/{budget['id']}", headers=auth_headers)

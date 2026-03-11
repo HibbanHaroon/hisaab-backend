@@ -15,5 +15,6 @@ class BudgetResponse(BudgetBase):
     id: int
     user_id: int
     amount_spent: float = 0.0
+    amount_left: float = 0.0
 
     model_config = ConfigDict(from_attributes=True)

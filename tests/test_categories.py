@@ -15,7 +15,7 @@ def category(client: TestClient, auth_headers):
     response = client.post(
         CATEGORY_BASE,
         headers=auth_headers,
-        json={"name": "Food", "description": "Groceries and dining out", "color": "#ff0000"}
+        json={"name": "Food", "description": "Groceries and dining out", "color": "#ff0000", "icon": "fastfood"}
     )
     return response.json()
 
@@ -23,12 +23,13 @@ def test_create_category(client: TestClient, auth_headers):
     response = client.post(
         CATEGORY_BASE,
         headers=auth_headers,
-        json={"name": "Travel", "description": "Flights and hotels", "color": "#00ff00"}
+        json={"name": "Travel", "description": "Flights and hotels", "color": "#00ff00", "icon": "flight"}
     )
     assert response.status_code == 201
     data = response.json()
     assert data["name"] == "Travel"
     assert data["description"] == "Flights and hotels"
+    assert data["icon"] == "flight"
     assert "id" in data
 
 def test_create_category_duplicate_name(client: TestClient, auth_headers, category):
@@ -50,17 +51,19 @@ def test_get_category(client: TestClient, auth_headers, category):
     response = client.get(f"{CATEGORY_BASE}/{category['id']}", headers=auth_headers)
     assert response.status_code == 200
     assert response.json()["name"] == "Food"
+    assert response.json()["icon"] == "fastfood"
 
 def test_update_category(client: TestClient, auth_headers, category):
     response = client.put(
         f"{CATEGORY_BASE}/{category['id']}",
         headers=auth_headers,
-        json={"name": "Updated Food", "color": "#0000ff"}
+        json={"name": "Updated Food", "color": "#0000ff", "icon": "restaurant"}
     )
     assert response.status_code == 200
     data = response.json()
     assert data["name"] == "Updated Food"
     assert data["color"] == "#0000ff"
+    assert data["icon"] == "restaurant"
     assert data["description"] == category["description"] 
 
 def test_delete_category(client: TestClient, auth_headers, category):
