@@ -10,6 +10,7 @@ INVALID_REFRESH_TOKEN = "Invalid or expired refresh token."
 ALREADY_VERIFIED = "Account is already verified."
 INVALID_GOOGLE_TOKEN = "Invalid or expired Google token."
 PROVIDER_MISMATCH = "This email is registered with a different auth provider."
+INVALID_TOKEN = "Invalid token."
 
 # Categories & Budgets
 BUDGET_NOT_FOUND = "Budget not found"

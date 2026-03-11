@@ -23,10 +23,10 @@ from ..constants.error_messages import (
     PASSWORD_MISMATCH, EMAIL_EXISTS, INVALID_CREDENTIALS,
     INVALID_OTP, USER_NOT_FOUND, UNVERIFIED_ACCOUNT,
     INVALID_REFRESH_TOKEN, ALREADY_VERIFIED,
-    INVALID_GOOGLE_TOKEN, PROVIDER_MISMATCH
+    INVALID_GOOGLE_TOKEN, PROVIDER_MISMATCH, INVALID_TOKEN
 )
 from ..constants.endpoints import (
-    REGISTER, LOGIN, VERIFY_ACCOUNT, FORGOT_PASSWORD,
+    REGISTER, LOGIN, LOGOUT, VERIFY_ACCOUNT, FORGOT_PASSWORD,
     RESET_PASSWORD, REFRESH, RESEND_OTP,
     GUEST_AUTH, GOOGLE_AUTH
 )
@@ -37,7 +37,7 @@ security = HTTPBearer()
 router = APIRouter()
 
 def _generate_tokens(user: User) -> dict:
-    token_data = {"sub": user.email, "user_id": user.id}
+    token_data = {"sub": user.email, "user_id": user.id, "token_version": user.token_version}
     return {
         "access_token": create_access_token(token_data),
         "refresh_token": create_refresh_token(token_data),
@@ -130,6 +130,25 @@ async def login(request: LoginRequest, db: Session = Depends(get_db)) -> TokenRe
 
     return _generate_tokens(user)
 
+@router.post(LOGOUT, response_model=MessageResponse, status_code=status.HTTP_200_OK)
+async def logout(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db)
+) -> MessageResponse:
+    payload = verify_token(credentials.credentials, expected_type="access")
+    if not payload:
+        raise CustomHTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=INVALID_TOKEN)
+    
+    user = db.query(User).filter(User.email == payload.get("sub")).first()
+    if not user or user.token_version != payload.get("token_version"):
+        raise CustomHTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=INVALID_TOKEN)
+        
+    user.token_version += 1
+    db.commit()
+
+    return MessageResponse(message="Successfully logged out.")
+
+
 @router.post(FORGOT_PASSWORD, response_model=MessageResponse, status_code=status.HTTP_200_OK)
 async def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(get_db)) -> MessageResponse:
     user = db.query(User).filter(User.email == request.email).first()
@@ -172,8 +191,8 @@ async def refresh_token(
         raise CustomHTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=INVALID_REFRESH_TOKEN)
 
     user = db.query(User).filter(User.email == payload.get("sub")).first()
-    if not user:
-        raise CustomHTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=USER_NOT_FOUND)
+    if not user or user.token_version != payload.get("token_version"):
+        raise CustomHTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=INVALID_REFRESH_TOKEN)
 
     return _generate_tokens(user)
 
@@ -232,7 +251,7 @@ async def google_auth(request: GoogleAuthRequest, db: Session = Depends(get_db))
         raise CustomHTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=INVALID_GOOGLE_TOKEN)
 
     email = idinfo.get("email")
-    print(idinfo)
+
     if not email:
         raise CustomHTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=INVALID_GOOGLE_TOKEN)
 

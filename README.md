@@ -114,6 +114,7 @@ Below is the complete list of REST API endpoints that will be necessary to cover
 - `POST /api/auth/resend-otp` - Resend OTP for email verification or password reset
 - `POST /api/auth/google` - Login with Google
 - `POST /api/auth/guest` - Login as a guest (No body required)
+- `POST /api/auth/logout` - Logout the user (`token_version` is used in the user model to invalidate the token)
 
 ### User (`/api/users`)
 

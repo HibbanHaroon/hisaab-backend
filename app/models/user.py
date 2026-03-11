@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, DateTime, Boolean
+from sqlalchemy import Column, String, DateTime, Boolean, Integer
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from ..db import Base
@@ -13,6 +13,7 @@ class User(Base):
     is_verified = Column(Boolean, default=False)
     auth_provider = Column(String, default="password") # "password", "google", "anonymous"
     provider_id = Column(String, nullable=True)
+    token_version = Column(Integer, default=0, nullable=False)
 
     expenses = relationship("Expense", backref="user")
     budgets = relationship("Budget", backref="user")

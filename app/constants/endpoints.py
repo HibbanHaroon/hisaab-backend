@@ -16,6 +16,7 @@ REFRESH = "/refresh"
 RESEND_OTP = "/resend-otp"
 GUEST_AUTH = "/guest"
 GOOGLE_AUTH = "/google"
+LOGOUT = "/logout"
 
 # User
 PROFILE = "/profile"

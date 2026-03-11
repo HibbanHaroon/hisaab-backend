@@ -19,8 +19,6 @@ def get_current_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=INVALID_ACCESS_TOKEN
         )
-
-    print(payload)
     
     user = db.query(User).filter(User.email == payload.get("sub")).first()
     if not user:
@@ -28,4 +26,11 @@ def get_current_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=USER_NOT_FOUND
         )
+        
+    if user.token_version != payload.get("token_version"):
+        raise CustomHTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=INVALID_ACCESS_TOKEN
+        )
+        
     return user

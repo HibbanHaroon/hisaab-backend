@@ -1,6 +1,6 @@
 from unittest.mock import patch
 from fastapi.testclient import TestClient
-from app.constants.endpoints import BASE_URL, AUTH, REGISTER, LOGIN, VERIFY_ACCOUNT, FORGOT_PASSWORD, RESET_PASSWORD, REFRESH, RESEND_OTP, GUEST_AUTH, GOOGLE_AUTH
+from app.constants.endpoints import BASE_URL, AUTH, REGISTER, LOGIN, LOGOUT, VERIFY_ACCOUNT, FORGOT_PASSWORD, RESET_PASSWORD, REFRESH, RESEND_OTP, GUEST_AUTH, GOOGLE_AUTH
 from app.constants.error_messages import UNVERIFIED_ACCOUNT, INVALID_CREDENTIALS, INVALID_OTP, INVALID_REFRESH_TOKEN, ALREADY_VERIFIED, INVALID_GOOGLE_TOKEN, PROVIDER_MISMATCH
 from app.constants.otp_types import OTPType
 
@@ -339,3 +339,47 @@ def test_google_auth_invalid_token(client: TestClient):
         )
     assert response.status_code == 401
     assert response.json()["detail"] == INVALID_GOOGLE_TOKEN
+
+def test_logout(client: TestClient, db_session):
+    client.post(
+        f"{AUTH_BASE}{REGISTER}",
+        json={
+            "first_name": "Logout",
+            "last_name": "User",
+            "email": "logout@example.com",
+            "password": "strongpassword123",
+            "confirm_password": "strongpassword123"
+        }
+    )
+
+    from app.models.verification_code import VerificationCode
+    from app.models.user import User
+
+    user = db_session.query(User).filter(User.email == "logout@example.com").first()
+    code_record = db_session.query(VerificationCode).filter(VerificationCode.user_id == user.id).first()
+
+    verify_response = client.post(
+        f"{AUTH_BASE}{VERIFY_ACCOUNT}",
+        json={"email": "logout@example.com", "otp": code_record.code}
+    )
+    access_token = verify_response.json()["access_token"]
+
+    # Test logout with valid token
+    logout_response = client.post(
+        f"{AUTH_BASE}{LOGOUT}",
+        headers={"Authorization": f"Bearer {access_token}"}
+    )
+    assert logout_response.status_code == 200
+    assert logout_response.json()["message"] == "Successfully logged out."
+
+    # Test logout with no token
+    logout_no_token = client.post(f"{AUTH_BASE}{LOGOUT}")
+    assert logout_no_token.status_code == 401 # Should return 401 Unauthorized
+
+    # Test logout with invalid token
+    logout_invalid = client.post(
+        f"{AUTH_BASE}{LOGOUT}",
+        headers={"Authorization": "Bearer invalid_token"}
+    )
+    assert logout_invalid.status_code == 401
+

@@ -301,7 +301,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n  \"email\": \"hibbanharoon+1@gmail.com\",\r\n  \"otp\": \"078581\"\r\n}",
+              "raw": "{\r\n  \"email\": \"hibbanharoonk@gmail.com\",\r\n  \"otp\": \"836472\"\r\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -466,7 +466,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n  \"email\": \"hibbanharoon@gmail.com\",\r\n  \"password\": \"Hibban@1234\"\r\n}",
+              "raw": "{\r\n  \"email\": \"hibbanharoonk@gmail.com\",\r\n  \"password\": \"Hibban@1234\"\r\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1009,6 +1009,89 @@
               ],
               "cookie": [],
               "body": "{\n    \"message\": \"If the email exists, a new OTP has been sent.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/auth/logout",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "logout"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Logout - Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/api/auth/logout",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "api",
+                    "auth",
+                    "logout"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "date",
+                  "value": "Wed, 11 Mar 2026 12:48:22 GMT"
+                },
+                {
+                  "key": "server",
+                  "value": "uvicorn"
+                },
+                {
+                  "key": "content-length",
+                  "value": "38"
+                },
+                {
+                  "key": "content-type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"message\": \"Successfully logged out.\"\n}"
             }
           ]
         }
