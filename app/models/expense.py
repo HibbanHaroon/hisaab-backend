@@ -9,5 +9,6 @@ class Expense(Base):
     name = Column(String, index=True, nullable=False)
     description = Column(String)
     amount = Column(Double, nullable=False)
+    expense_date = Column(DateTime, nullable=False, default=func.now())
 
     category = relationship("Category", back_populates="expenses")

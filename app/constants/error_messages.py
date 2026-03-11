@@ -10,3 +10,11 @@ INVALID_REFRESH_TOKEN = "Invalid or expired refresh token."
 ALREADY_VERIFIED = "Account is already verified."
 INVALID_GOOGLE_TOKEN = "Invalid or expired Google token."
 PROVIDER_MISMATCH = "This email is registered with a different auth provider."
+
+# Categories & Budgets
+BUDGET_NOT_FOUND = "Budget not found"
+BUDGET_ALREADY_EXISTS = "Budget already exists for this category"
+CATEGORY_NOT_FOUND_OR_UNAUTHORIZED = "Category not found or does not belong to user"
+CATEGORY_NOT_FOUND = "Category not found"
+CATEGORY_ALREADY_EXISTS = "Category with this name already exists"
+EXPENSE_NOT_FOUND = "Expense not found"
